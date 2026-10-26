@@ -1,0 +1,27 @@
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+
+# Obsidian 工作区状态（笔记和配置照常提交，只忽略频繁变动的）
+.claude/
+.obsidian/
+.learnings/
+Obsidian展示素材/
+Projects & Internships/
+
+# 编译产物
+*.exe
+*.dll
+*.o
+*.obj
+*.pdb
+*.ilk
+build/
+out/
+
+# 临时与系统文件
+*.bak
+*.tmp
+Thumbs.db
+desktop.ini
