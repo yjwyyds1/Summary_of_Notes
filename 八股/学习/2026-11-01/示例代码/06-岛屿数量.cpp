@@ -1,0 +1,44 @@
+// 目的：对 0/1 网格按上下左右连接关系计算岛屿数量。
+// 前置：每行等长；本实现只读输入，以 visited 记录已入队格子。
+// 步骤：外层发现未访问陆地就加一；BFS 用队列标记该岛全部陆地。
+#include <cassert>   // assert：核对两个岛及全水情况。
+#include <queue>     // queue：先进先出，供广度优先搜索使用。
+#include <stdexcept> // invalid_argument：报告不规则网格。
+#include <utility>   // pair：保存行列坐标。
+#include <vector>    // vector：输入与访问标记。
+
+int count_islands(const std::vector<std::vector<char>>& grid) {
+    if (grid.empty()) return 0;
+    const int rows = static_cast<int>(grid.size());
+    const int cols = static_cast<int>(grid[0].size());
+    for (const auto& row : grid) { // 先检查所有行，BFS 才能安全访问任意相邻行。
+        if (static_cast<int>(row.size()) != cols) throw std::invalid_argument("ragged grid");
+    }
+    std::vector<std::vector<bool>> seen(rows, std::vector<bool>(cols, false));
+    int count = 0;
+    const int dr[4]{-1, 1, 0, 0}, dc[4]{0, 0, -1, 1}; // 四个正交邻居。
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            if (grid[r][c] != '1' || seen[r][c]) continue;
+            ++count; // 一个尚未归属的陆地，开启一个新连通块。
+            std::queue<std::pair<int,int>> pending;
+            pending.push({r, c}); seen[r][c] = true; // 入队即标记，防止重复入队。
+            while (!pending.empty()) {
+                const auto [x, y] = pending.front(); pending.pop(); // C++17 结构化绑定。
+                for (int k = 0; k < 4; ++k) {
+                    const int nx = x + dr[k], ny = y + dc[k];
+                    if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) continue;
+                    if (grid[nx][ny] == '1' && !seen[nx][ny]) {
+                        seen[nx][ny] = true; pending.push({nx, ny});
+                    }
+                }
+            }
+        }
+    }
+    return count;
+}
+
+int main() {
+    assert(count_islands({{'1','1','0'},{'0','0','0'},{'0','1','1'}}) == 2);
+    assert(count_islands({{'0','0'}}) == 0);
+}

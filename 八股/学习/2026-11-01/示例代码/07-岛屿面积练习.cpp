@@ -1,0 +1,49 @@
+// 目的：在岛屿数量之外，求最大岛屿面积；面积是陆地格子的个数。
+// 前置：字符网格只含 '0' 和 '1'，每行长度相同；四方向相邻才算连通。
+// 步骤：每次发现新岛就 BFS；出队一格，当前岛面积加一。
+#include <algorithm> // std::max：保存到目前为止最大的岛面积。
+#include <cassert>   // assert：核对样例及空网格。
+#include <queue>     // queue：BFS 的待处理队列。
+#include <stdexcept> // invalid_argument：报告不规则网格。
+#include <utility>   // pair：同时保存两个返回值及坐标。
+#include <vector>    // vector：网格和已访问标记。
+
+std::pair<int,int> island_stats(const std::vector<std::vector<char>>& grid) {
+    if (grid.empty()) return {0, 0}; // 没有格子，自然没有岛与面积。
+    const int rows = static_cast<int>(grid.size());
+    const int cols = static_cast<int>(grid[0].size());
+    for (const auto& row : grid) { // 先整体检查，避免 BFS 访问短行时越界。
+        if (static_cast<int>(row.size()) != cols) throw std::invalid_argument("ragged grid");
+    }
+    std::vector<std::vector<bool>> seen(rows, std::vector<bool>(cols, false));
+    const int dr[4]{-1, 1, 0, 0}, dc[4]{0, 0, -1, 1};
+    int islands = 0, largest = 0;
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            if (grid[r][c] != '1' || seen[r][c]) continue;
+            ++islands; // 发现一个尚未归属的连通块。
+            int area = 0; // 只统计本轮 BFS 的面积，不累计上一个岛。
+            std::queue<std::pair<int,int>> pending;
+            pending.push({r,c}); seen[r][c] = true;
+            while (!pending.empty()) {
+                const auto [x,y] = pending.front(); pending.pop();
+                ++area; // 每格只入队一次，所以每格只计一次面积。
+                for (int k = 0; k < 4; ++k) {
+                    const int nx = x + dr[k], ny = y + dc[k];
+                    if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) continue;
+                    if (grid[nx][ny] == '1' && !seen[nx][ny]) {
+                        seen[nx][ny] = true; pending.push({nx,ny});
+                    }
+                }
+            }
+            largest = std::max(largest, area); // 一轮 BFS 结束后才有完整面积。
+        }
+    }
+    return {islands, largest}; // pair.first 是数量，pair.second 是最大面积。
+}
+
+int main() {
+    assert((island_stats({{'1','1','0'},{'0','1','0'},{'1','0','1'}})
+            == std::pair<int,int>{3,3})); // assert 宏遇到模板逗号，外层再包一层括号。
+    assert((island_stats({}) == std::pair<int,int>{0,0}));
+}
